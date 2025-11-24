@@ -5,7 +5,7 @@ library(writexl)
 library(ANCOMBC)
 library(LOCOM)
 library(permute)
-library(ZIPGSK)
+library(DUETknockoff)
 
 set.seed(1003)
 seed <- 1003
@@ -340,5 +340,6 @@ Q_value_list <- list(
   Wilcoxon_Com_p = Q_Cauchy_wilcox,
   Wilcoxon_Com_count = Q_wilcox_pool
 )
+
 
 
