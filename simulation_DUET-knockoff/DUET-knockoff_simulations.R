@@ -11,6 +11,7 @@ library(ANCOMBC)
 library(writexl)
 library(readxl)
 library(HMP)
+librray(DUETknockoff)
 
 Sys.setenv(
   MC_CORES = "1",           
@@ -302,7 +303,7 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   
   # ==== End of Data Preparation ==== #
   
-  # ==== ZINBSK ==== #
+  # ==== DUETknockoff ==== #
   W1 <- otu.table1.sim[, otus.keep.pool, drop = FALSE]
   W2 <- otu.table2.sim[, otus.keep.pool, drop = FALSE]
   
@@ -339,14 +340,14 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   
   T_var <- which(colnames(W) %in% causal.otus)
   
-  res.ZINBSK <- ZIPG_SK_other(
+  res.DUETknockoff <- DUETknockoff(
     W = W, class_K = class_K, data_x = data_x, M = M, y = y, T_var = T_var,
-    fdr = fdr_target, method = "ZINB", test_statistic = "DE", filter_statistics = 3,
+    fdr = fdr_target, test_statistic = "DE", filter_statistics = 3,
     offset=1
   )
   
-  zinbsk.fdr <- res.ZINBSK$FDRPower[2]
-  zinbsk.power <- res.ZINBSK$FDRPower[3]
+  duetknockoff.fdr <- res.DUETknockoff$FDRPower[2]
+  duetknockoff.power <- res.DUETknockoff$FDRPower[3]
   
   # ==== Com2seq / Locom ==== #
   res.locom1 <- locom(otu.table = otu.table1.sim.filter, Y = Y, C = C,
@@ -471,12 +472,12 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   
   otu.pool.ancombc <-summarize_otu_results(q.pool.ancombc, causal.otus, noncausal.otus)
   
-  fdr_vec <- c(ZINBSK=zinbsk.fdr, Com2seq=otu.new.omni$fdr,
+  fdr_vec <- c(DUETknockoff=duetknockoff.fdr, Com2seq=otu.new.omni$fdr,
                Locom_Com_P=otu.comp.locom$fdr, Locom_Com_Count=otu.pool.locom$fdr,
                Locom_16s=otu.locom.1$fdr, Locom_shotgun=otu.locom.2$fdr,
                ANCOMBC_Com_Count=otu.pool.ancombc$fdr)
   
-  power_vec <- c(ZINBSK=zinbsk.power, Com2seq=otu.new.omni$sen,
+  power_vec <- c(DUETknockoff=duetknockoff.power, Com2seq=otu.new.omni$sen,
                  Locom_Com_P=otu.comp.locom$sen, Locom_Com_Count=otu.pool.locom$sen,
                  Locom_16s=otu.locom.1$sen, Locom_shotgun=otu.locom.2$sen,
                  ANCOMBC_Com_Count=otu.pool.ancombc$sen)
@@ -526,7 +527,7 @@ combos$label <- sprintf("c=%g|beta=%g|prop.diff=%.2f|nsam=%d_%d|fdr=%.2f",
 
 
 ## method
-methods <- c("ZINBSK", "Com2seq", "Locom_Com_P", "Locom_Com_Count",
+methods <- c("DUETknockoff", "Com2seq", "Locom_Com_P", "Locom_Com_Count",
              "Locom_16s", "Locom_shotgun","ANCOMBC_Com_Count")
 
 ## storage for each como
@@ -565,7 +566,7 @@ stopifnot(length(unique(tasks$seed)) == nrow(tasks))
 ## Preload package
 suppressPackageStartupMessages({
   try(library(LOCOM), silent = TRUE)
-  try(library(ZIPGSK), silent = TRUE)
+  try(library(ZDUETknockoff), silent = TRUE)
   try(library(ANCOMBC), silent = TRUE)
   try(library(dirmult), silent = TRUE)
 })
@@ -683,4 +684,5 @@ for (k in seq_len(K)) {
 }
 
 res_df <- do.call(rbind, summary_rows)
+
 print(res_df)
