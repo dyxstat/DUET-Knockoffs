@@ -1,4 +1,4 @@
-#' Extension of ZINB_SK to consider more synthetic data methods.
+#' FDR-Controlled Joint Feature Selection from Dual Microbiome Data
 #'
 #' @param W Count data.
 #' @param class_K Vector data, representing different sources of count data.
@@ -127,4 +127,5 @@ DUET_knockoff <- function(W = W, class_K = NULL, data_x = NULL, M = NULL, y = y,
   )
   return(list(fdr_target = fdr, test_stat = test_stat, filter_stat = filter_stat, S = S, res = res))
 }
+
 
