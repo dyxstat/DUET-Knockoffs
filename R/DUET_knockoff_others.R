@@ -1,3 +1,9 @@
+# This file contains code derived from the 'scDesign2' package (MIT License).
+# Original copyright (c) 2020 JSB-UCLA.
+# The original code was released under the MIT License.
+# Modifications in this file were made by Yiqiao Zhu (2025).
+
+
 #' Importance statistics based on GLM with cross-validation.
 #'
 #' Computes importance statistics

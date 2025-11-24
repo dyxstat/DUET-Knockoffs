@@ -1,3 +1,8 @@
+# This file contains code derived from the 'knockoff' R package (GPL-3).
+# Original authors: Rina Foygel Barber, Emmanuel Candès, Lucas Janson, Evan Patterson, Matteo Sesia.
+# The original code was distributed under the GNU GPL-3 license.
+# Modifications in this file were made by Yiqiao Zhu (2025).
+
 #' @keywords internal
 is_posdef <- function (A, tol = 1e-09)
 {

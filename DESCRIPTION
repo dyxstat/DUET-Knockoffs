@@ -5,7 +5,7 @@ Authors@R: c(
     person("Yuxuan", "Du", role = c("aut", "cre"), email = "yuxuan.du@utsa.edu"),
     person("Yiqiao", "Zhu", role = "aut"))
 Description: DUET-knockoff implemnets a knockoff-based framework for integrative feature selection from paired 16S and shotgun microbiome profiles. DUET-knockoff tests, for each taxon, a union null that it is not conditionally associated with the outcome in at least one platform, so discoveries reflect associations replicated across both technologies.
-License: MIT + file LICENSE
+License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
@@ -23,4 +23,3 @@ Suggests:
     knitr,
     rmarkdown
 VignetteBuilder: knitr
-
