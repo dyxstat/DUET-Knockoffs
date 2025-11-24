@@ -14,11 +14,11 @@ fdr_target <- 0.1
 n_rej_stop <- 100
 n_cores <- 4
 
-W <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/Diet/W.csv", row.names = 1)
-M <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/Diet/M.csv", header = FALSE)
-y <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/Diet/y.csv", header = FALSE)
-data_x <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/Diet/data_x.csv")
-class_K <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/Diet/class_K.csv", header = FALSE)
+W <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/Diet/W.csv", row.names = 1)
+M <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/Diet/M.csv", header = FALSE)
+y <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/Diet/y.csv", header = FALSE)
+data_x <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/Diet/data_x.csv")
+class_K <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/Diet/class_K.csv", header = FALSE)
 
 # ==== Com2seq / Locom ==== #
 W1 <- as.matrix(W[1:76, ])
@@ -308,7 +308,7 @@ DA_knockoff <- colnames(W)[knockoff_idx]
 DA_knockoff
 
 W_knockoff <- if(length(knockoff_idx) > 0){
-  res.ZINBSK$filter_stat[knockoff_idx]
+  res.DUETknockoff$filter_stat[knockoff_idx]
 } else {
   numeric(0)
 }
@@ -340,6 +340,7 @@ Q_value_list <- list(
   Wilcoxon_Com_p = Q_Cauchy_wilcox,
   Wilcoxon_Com_count = Q_wilcox_pool
 )
+
 
 
 
