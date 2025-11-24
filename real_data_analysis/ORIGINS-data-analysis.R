@@ -304,7 +304,7 @@ Q_wilcox_pool <- if(length(DA_Pool_wilcox) > 0) {
 # y <- as.numeric(y[,1])
 
 set.seed(1002)
-res.DUETknockoff <- ZIPG_SK_other(W = W, M = M, class_K = class_K, data_x = data_x,
+res.DUETknockoff <-DUETknockoffW = W, M = M, class_K = class_K, data_x = data_x,
                             fdr = 0.1,  y = y, T_var = NULL,
                             test_statistic = "DE", filter_statistics = 1)
 
@@ -345,5 +345,6 @@ Q_value_list <- list(
   Wilcoxon_Com_p = Q_Cauchy_wilcox,
   Wilcoxon_Com_count = Q_wilcox_pool
 )
+
 
 
