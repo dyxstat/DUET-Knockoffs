@@ -486,7 +486,7 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
 }
 
 ## -----------------------------
-## 100 times Monte Carlo over grid (ZINBSK + Benchmark)
+## 100 times Monte Carlo over grid (DUET_knockoff + Benchmark)
 ## -----------------------------
 
 c_grid <- c(1e4, 1e5, 1e6)
@@ -686,3 +686,4 @@ for (k in seq_len(K)) {
 res_df <- do.call(rbind, summary_rows)
 
 print(res_df)
+
