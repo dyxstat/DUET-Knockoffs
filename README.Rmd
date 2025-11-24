@@ -1,4 +1,17 @@
+---
+output: github_document
+---
+
 <!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "man/figures/README-",
+  out.width = "100%"
+)
+```
 
 # DUETknockoff
 
@@ -15,7 +28,7 @@ devtools::install_github("dyxstat/DUET-Knockoffs")
 
 An example of using the DUET_knockoff function
 
-``` r
+```{r example, eval=FALSE}
 library(DUETknockoff)
 data(Zhu_count1)
 data(Ye_count1)
@@ -54,4 +67,3 @@ res <- DUET_knockoff(
 # Print first 10 test statistics and filter statistics
 res$test_stat[1:10]
 res$filter_stat[1:10]
-```
