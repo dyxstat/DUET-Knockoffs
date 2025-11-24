@@ -38,9 +38,11 @@
 #' class_K <- factor(rep(1:n_data, each = n_sam))
 #' y <- rep(c(rep(1, n_sam/2), rep(2, n_sam/2)), times = n_data)
 #'
-#' res.DUET.knockoff <- DUET_knockoff(W = W, M = M, class_K = class_K, y=y, data_x=NULL,
-#'                      T_var = NULL, test_statistic = "DE",
-#'                      filter_statistics=3, offset=1)
+#'res.DUET.knockoff <- suppressWarnings(
+#'   DUET_knockoff(W = W, M = M, class_K = class_K, y=y, data_x=NULL,
+#'                T_var = NULL, test_statistic = "DE",
+#'                filter_statistics=3, offset=1)
+#'   )
 #' res.DUET.knockoff$test_stat[1:10]
 #' res.DUET.knockoff$filter_stat[1:10]
 DUET_knockoff <- function(W = W, class_K = NULL, data_x = NULL, M = NULL, y = y, T_var = NULL, fdr = 0.2, offset = 1,
