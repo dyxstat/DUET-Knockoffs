@@ -1,0 +1,64 @@
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+# DUETknockoff
+
+The DUETknockoff package provides a knockoff-based framework for
+integrative feature selection from paired 16S and shotgun microbiome
+profiles. DUET-knockoff uses a ZINB–Gaussian copula model to construct
+platform-specific knockoffs and, for each taxon, tests a union null that
+it is not conditionally associated with the outcome in at least one
+platform. Discoveries reflect associations replicated across both
+technologies.
+
+## Installation
+
+``` r
+# install.packages("devtools")
+devtools::install_github("dyxstat/DUET-Knockoffs")
+```
+
+## Example
+
+An example of using the DUET_knockoff function
+
+``` r
+library(DUETknockoff)
+data(Zhu_count1)
+data(Ye_count1)
+
+set.seed(42)
+
+# Prepare paired 16S and SMS count matrices
+W1 <- Zhu_count1
+W2 <- Ye_count1
+W  <- rbind(W1, W2)
+
+M <- rowSums(W)  # Sequencing depth
+
+n_sam  <- nrow(W1)  # Number of samples and platforms
+n_data <- 2
+
+# Platform indicator: 1 = 16S, 2 = shotgun
+class_K <- factor(rep(1:n_data, each = n_sam))
+
+# Binary outcome
+y <- rep(c(rep(1, n_sam/2), rep(2, n_sam/2)), times = n_data)
+
+# Run DUET_knockoff using differential expression–based test statistic
+res <- DUET_knockoff(
+  W = W,
+  M = M,
+  class_K = class_K,
+  y = y,
+  data_x = NULL,
+  T_var = NULL,
+  test_statistic = "DE",
+  filter_statistics = 3,
+  offset = 1
+)
+
+# Print first 10 test statistics and filter statistics
+res$test_stat[1:10]
+res$filter_stat[1:10]
+```
