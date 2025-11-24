@@ -2,7 +2,7 @@
 % Please edit documentation in R/DUET_knockoff.R
 \name{DUET_knockoff}
 \alias{DUET_knockoff}
-\title{Extension of ZINB_SK to consider more synthetic data methods.}
+\title{FDR-Controlled Joint Feature Selection from Dual Microbiome Data.}
 \usage{
 DUET_knockoff(
   W = W,
