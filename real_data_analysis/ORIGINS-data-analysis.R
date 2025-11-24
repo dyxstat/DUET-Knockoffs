@@ -5,7 +5,7 @@ library(writexl)
 library(ANCOMBC)
 library(LOCOM)
 library(permute)
-library(ZIPGSK)
+library(DUETknockoff)
 
 set.seed(1003)
 seed <- 1003
@@ -14,11 +14,11 @@ fdr_target <- 0.1
 n_rej_stop <- 100
 n_cores <- 4
 
-W <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/W.csv", row.names = 1)
-M <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/M.csv", header = FALSE)
-y <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/y.csv", header = FALSE)
-data_x <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/data_x.csv")
-class_K <- read.csv("C:/Users/AW/Desktop/real-data ZINBSK/class_K.csv",
+W <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/W.csv", row.names = 1)
+M <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/M.csv", header = FALSE)
+y <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/y.csv", header = FALSE)
+data_x <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/data_x.csv")
+class_K <- read.csv("C:/Users/AW/Desktop/real-data DUETknockoff/class_K.csv",
                     header = FALSE)
 
 
@@ -41,22 +41,22 @@ C2 <- as.matrix(data_x[141:280, ])
 
 
 # locom_16s, locom_sms, locom_pool
-res.locom1 <- locom(W1, Y=Y1, C=C1, n.perm.max = 1000,
+res.locom1 <- locom(W1, Y=Y1, C=C1, n.perm.max = 50000,
                     fdr.nominal = fdr_target, seed = seed,
                     n.cores = n_cores, n.rej.stop = n_rej_stop)
 
-res.locom2 <- locom(W2, Y=Y2, C=C1, n.perm.max = 1000,
+res.locom2 <- locom(W2, Y=Y2, C=C1, n.perm.max = 50000,
                     fdr.nominal = fdr_target, seed = seed,
                     n.cores = n_cores, n.rej.stop = n_rej_stop)
 
-res.locom.pool <- locom(W_pool, Y=Y1, C=C1, n.perm.max = 1000,
+res.locom.pool <- locom(W_pool, Y=Y1, C=C1, n.perm.max = 50000,
                         fdr.nominal = fdr_target, seed = seed,
                         n.cores = n_cores, n.rej.stop = n_rej_stop)
 
 res.Com2seq <- Com2seq(
   table1 = W1, table2 = W2, Y1=Y1, Y2=Y2, C1=C1, C2=C2,
   fdr.nominal = fdr_target, n.cores = n_cores,
-  n.perm.max = 1000, n.rej.stop = n_rej_stop,
+  n.perm.max = 50000, n.rej.stop = n_rej_stop,
   filter.thresh = 0, seed = seed
 )
 
@@ -298,26 +298,22 @@ Q_wilcox_pool <- if(length(DA_Pool_wilcox) > 0) {
   numeric(0)
 }
 
-# ==== ZINBSK ==== #
+# ==== DUETknockoff ==== #
 # M <- as.numeric(M[,1])
 # class_K <- as.numeric(class_K[,1])
 # y <- as.numeric(y[,1])
 
 set.seed(1002)
-res.ZINBSK <- ZIPG_SK_other(W = W, M = M, class_K = class_K, data_x = data_x,
-                            fdr = 0.1, method = "ZINB", y = y, T_var = NULL,
+res.DUETknockoff <- ZIPG_SK_other(W = W, M = M, class_K = class_K, data_x = data_x,
+                            fdr = 0.1,  y = y, T_var = NULL,
                             test_statistic = "DE", filter_statistics = 1)
 
-res <- DUET_KF(W = W, M = M, class_K = class_K, data_x = data_x,
-        fdr = 0.1, y = y, T_var = NULL,
-        test_statistic = "DE", filter_statistics = 1)
+knockoff_idx <- res.DUETknockoff$S
+DA_knockoff <- colnames(W)[knockoff_idx]
+DA_knockoff
 
-zinbsk_idx <- res.ZINBSK$S
-DA_zinbsk <- colnames(W)[zinbsk_idx]
-DA_zinbsk
-
-W_zinbsk <- if(length(zinbsk_idx) > 0){
-  res.ZINBSK$c_w_b[zinbsk_idx]
+W_knockoff <- if(length(knockoff_idx) > 0){
+  res.DUETknockoff$filter_stat[knockoff_idx]
 } else {
   numeric(0)
 }
@@ -325,7 +321,7 @@ W_zinbsk <- if(length(zinbsk_idx) > 0){
 # ==== Summary Output ==== #
 
 Taxa_list <- list(
-  ZINBSK = DA_zinbsk,
+  DUETknockoff = DA_knockoff,
   Com2seq_omni = DA_Com2seq,
   LOCOM_16s = DA_Locom_16s,
   LOCOM_shotgun = DA_Locom_shotgun,
@@ -338,7 +334,7 @@ Taxa_list <- list(
 )
 
 Q_value_list <- list(
-  ZINBSK = W_zinbsk,
+  DUETknockoff = W_knockoff,
   Com2seq_omni = Q_Com2seq,
   LOCOM_16s = Q_Locom_16s,
   LOCOM_shotgun = Q_Locom_shotgun,
@@ -349,4 +345,5 @@ Q_value_list <- list(
   Wilcoxon_Com_p = Q_Cauchy_wilcox,
   Wilcoxon_Com_count = Q_wilcox_pool
 )
+
 
