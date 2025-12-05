@@ -191,12 +191,13 @@ if (!is.null(sel_taxa)) {
 } else {
   cat("Selected taxa: not provided in fit (fit$S missing)\n")
 }
-if (!is.null(fit$FDRPower)) {
-  cat("FDRPower (if present):\n")
-  print(fit$FDRPower)
+if (!is.null(fit$res)) {
+  cat("res (if present):\n")
+  print(fit$res)
 }
 sink()
 
 message("[DUETknockoff] Done. See ./results/ for outputs.")
+
 
 
