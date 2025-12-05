@@ -128,7 +128,7 @@ y <- c(y_single, y_single)
 # ----------------------------------------------------------------------------
 # 4) Run DUET_knockoff
 # ----------------------------------------------------------------------------
-fdr_target <- 0.2  # adjust as needed
+fdr_target <- 0.1  # adjust as needed
 
 write.csv(W, file.path(results_dir, "W.csv"))
 write.csv(class_K, file.path(results_dir, "class_K.csv"))
@@ -198,4 +198,5 @@ if (!is.null(fit$FDRPower)) {
 sink()
 
 message("[DUETknockoff] Done. See ./results/ for outputs.")
+
 
