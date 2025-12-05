@@ -10,10 +10,11 @@
 # - Packages: DUETknockoff, knockoff, dirmult, readxl, biomformat, GUniFrac, vegan, readr, 
 #          LOCOM, matrixStats, prodlim, parallel
 #
+# install.packages("devtools")
+devtools::install_github("dyxstat/DUET-Knockoffs")
 
 suppressPackageStartupMessages({
   library(DUETknockoff)       
-  library(knockoff)
   library(dirmult)
   library(readxl)
   library(readr)
@@ -197,3 +198,4 @@ if (!is.null(fit$FDRPower)) {
 sink()
 
 message("[DUETknockoff] Done. See ./results/ for outputs.")
+
