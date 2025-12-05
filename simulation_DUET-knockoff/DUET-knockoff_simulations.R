@@ -11,7 +11,7 @@ library(ANCOMBC)
 library(writexl)
 library(readxl)
 library(HMP)
-librray(DUETknockoff)
+library(DUETknockoff)
 
 Sys.setenv(
   MC_CORES = "1",           
@@ -686,4 +686,5 @@ for (k in seq_len(K)) {
 res_df <- do.call(rbind, summary_rows)
 
 print(res_df)
+
 
