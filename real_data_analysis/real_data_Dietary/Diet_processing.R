@@ -12,9 +12,8 @@ library(parallel)
 library(matrixStats)
 library(gtsummary)
 
-library(LOCOM)
 
-filter_thresh <- 0.2
+filter_thresh <- 0.1
 
 #------------------------
 # meta data
@@ -245,4 +244,5 @@ length(union(colnames(otu_tab), colnames(shotgun_tab)))
 meta_union <- rbind(meta_common[,c("diet", "phylogency")], meta_otu_unique[,c("diet", "phylogency")], meta_shotgun_unique[,c("diet", "phylogency")])
 dim(meta_union) # 172 2
 chisq.test(meta_union$diet, meta_union$phylogency) # p-value=1.091e-07
+
 
