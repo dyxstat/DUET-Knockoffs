@@ -1,6 +1,8 @@
 #########################################################################################################
 # ORIGINS: investigate the association between periodontal bacteria and prediabetes prevalence
 #########################################################################################################
+# install.packages("devtools")
+devtools::install_github("dyxstat/DUET-Knockoffs")
 
 library(vtable)
 library(vegan)
@@ -12,7 +14,7 @@ library(parallel)
 library(matrixStats)
 library(LOCOM)
 
-filter_thresh <- 0.2
+filter_thresh <- 0.1
 
 
 #------------------------
@@ -271,6 +273,7 @@ wilcox.test(glu[w0], glu[w1]) # 4.163e-08***
 
 insulin <- as.numeric(meta_union$insulinv1)
 wilcox.test(insulin[w0], insulin[w1]) # 0.002597
+
 
 
 
