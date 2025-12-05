@@ -353,18 +353,18 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   
   T_var <- which(colnames(W) %in% causal.otus)
   
-  res.ZINBSK <- ZIPG_SK_other(
+  res.DUETknockoff <- DUET_knockoff(
     W = W, class_K = class_K, data_x = data_x, M = M, y = y, T_var = T_var,
-    fdr = fdr_target, method = "ZINB", test_statistic = "DE", filter_statistics = 3,
+    fdr = fdr_target, test_statistic = "DE", filter_statistics = 3,
     offset=1
   )
   
-  zinbsk.fdr <- res.ZINBSK$FDRPower[2]
-  zinbsk.power <- res.ZINBSK$FDRPower[3]
+  duetknockoff.fdr <- res.DUETknockoff$FDRPower[2]
+  duetknockoff.power <- res.DUETknockoff$FDRPower[3]
   
-  fdr_vec <- ZINBSK=zinbsk.fdr
+  fdr_vec <- DUETknockoff=duetknockoff.fdr
   
-  power_vec <- ZINBSK=zinbsk.power
+  power_vec <- DUETknockoff=duetknockoff.power
   
   list(fdr = fdr_vec, power = power_vec)
 }
@@ -555,3 +555,4 @@ for (k in seq_len(K)) {
 res_df <- do.call(rbind, summary_rows)
 
 print(res_df)
+
