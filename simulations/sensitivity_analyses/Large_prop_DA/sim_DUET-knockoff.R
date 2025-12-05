@@ -359,8 +359,8 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
     offset=1
   )
   
-  duetknockoff.fdr <- res.DUETknockoff$FDRPower[2]
-  duetknockoff.power <- res.DUETknockoff$FDRPower[3]
+  duetknockoff.fdr <- res.DUETknockoff$res[2]
+  duetknockoff.power <- res.DUETknockoff$res[3]
   
   fdr_vec <- DUETknockoff=duetknockoff.fdr
   
@@ -553,4 +553,5 @@ for (k in seq_len(K)) {
 }
 
 res_df <- do.call(rbind, summary_rows)
+
 print(res_df)
