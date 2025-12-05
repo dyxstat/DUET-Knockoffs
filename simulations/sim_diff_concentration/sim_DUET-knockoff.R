@@ -399,7 +399,7 @@ combos$label <- sprintf("c=%g|beta=%g|prop.diff=%.2f|nsam=%d_%d|fdr=%.2f",
 
 
 ## method
-methods <- c("ZINBSK")
+methods <- c("DUET-knockoff")
 
 ## storage for each combo
 fdr_store <- vector("list", K)
@@ -553,4 +553,5 @@ for (k in seq_len(K)) {
 }
 
 res_df <- do.call(rbind, summary_rows)
+
 print(res_df)
