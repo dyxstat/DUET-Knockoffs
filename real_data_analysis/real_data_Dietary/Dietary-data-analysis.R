@@ -6,6 +6,8 @@
 ### 1) Source DIET processing script (creates the objects)
 ### ─────────────────────────────────────────────────────────────────────────────
 source("Diet_processing.R")
+# install.packages("devtools")
+devtools::install_github("dyxstat/DUET-Knockoffs")
 
 if (!exists("meta")) {
   for (nm in c("meta_diet","meta_common","meta")) if (exists(nm)) { meta <- get(nm); break }
@@ -90,9 +92,9 @@ y <- c(y_single, y_single)
 
 
 # ----------------------------------------------------------------------------
-# 4) Run ZINB-SK
+# 4) Run DUET-knockoff
 # ----------------------------------------------------------------------------
-fdr_target <- 0.2  # adjust as needed
+fdr_target <- 0.1  # adjust as needed
 
 write.csv(W, "W.csv")
 write.csv(class_K, "class_K.csv")
@@ -152,3 +154,4 @@ cat("Selected taxa: ", length(sel_taxa), "\n", sep = "")
 if (length(sel_taxa)) cat("First few: ", paste(utils::head(sel_taxa, 20), collapse = ", "), "\n", sep = "")
 sink()
 cat("Saved outputs to:", normalizePath(outdir), "\n")
+
