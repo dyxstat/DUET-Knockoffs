@@ -24,41 +24,30 @@ An example of using the DUET_knockoff function
 
 ``` r
 library(DUETknockoff)
-data(Zhu_count1)
-data(Ye_count1)
 
 set.seed(42)
 
-# Prepare paired 16S and SMS count matrices
-W1 <- Zhu_count1
-W2 <- Ye_count1
-W  <- rbind(W1, W2)
-
-M <- rowSums(W)  # Sequencing depth
-
-n_sam  <- nrow(W1)  # Number of samples and platforms
-n_data <- 2
-
-# Platform indicator: 1 = 16S, 2 = shotgun
-class_K <- factor(rep(1:n_data, each = n_sam))
-
-# Binary outcome
-y <- rep(c(rep(1, n_sam/2), rep(2, n_sam/2)), times = n_data)
+data("W")        # count matrix
+data("M")        # library size
+data("y")        # control / case group
+data("data_x")   # host covariates
+data("class_K")  # sequencing platforms
 
 # Run DUET_knockoff using differential expression–based test statistic
-res <- DUET_knockoff(
+res.DUETknockoff <- DUET_knockoff(
   W = W,
   M = M,
   class_K = class_K,
   y = y,
-  data_x = NULL,
-  T_var = NULL,
+  data_x = data_x,
+  T_var = NULL,          # causal taxa is NULL
   test_statistic = "DE",
-  filter_statistics = 3,
-  offset = 1
+  filter_statistics = 1,
+  fdr = 0.1,
 )
 
-# Print first 10 test statistics and filter statistics
-res$test_stat[1:10]
-res$filter_stat[1:10]
+# Detected genera set
+genera_idx <- res.DUETknockoff$S
+genera_set <- colnames(W)[genera_idx]
+genera_set
 ```
