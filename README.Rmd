@@ -46,7 +46,7 @@ res.DUETknockoff <- DUET_knockoff(
   class_K = class_K,
   y = y,
   data_x = data_x,
-  T_var = NULL,          # causal taxa is NULL
+  T_var = NULL,          # causal taxa set is NULL
   test_statistic = "DE",
   filter_statistics = 1,
   fdr = 0.1,
@@ -56,5 +56,9 @@ res.DUETknockoff <- DUET_knockoff(
 genera_idx <- res.DUETknockoff$S
 genera_set <- colnames(W)[genera_idx]
 genera_set
+
+# [1] "g__Actinomyces"    "g__Neisseria"      "g__Haemophilus"    "g__Prevotella"     "g__Veillonella" 
+# [6] "g__Granulicatella" "g__Megasphaera"    "g__Oribacterium"   "g__Atopobium"      "g__Bulleidia"  
+# [11] "g__Mogibacterium"  "g__Selenomonas"    "g__Blautia"
 ```
 
