@@ -35,7 +35,7 @@ An example of using the DUET_knockoff function
 ``` r
 library(DUETknockoff)
 
-set.seed(42, kind = "Mersenne-Twister", normal.kind = "Inversion")
+set.seed(42)
 
 data("W")        # count matrix
 data("M")        # library size
