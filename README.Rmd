@@ -66,5 +66,16 @@ genera_set
 # [1] "g__Actinomyces"    "g__Neisseria"      "g__Haemophilus"    "g__Prevotella"     "g__Veillonella" 
 # [6] "g__Granulicatella" "g__Megasphaera"    "g__Oribacterium"   "g__Atopobium"      "g__Bulleidia"  
 # [11] "g__Mogibacterium"  "g__Selenomonas"    "g__Blautia"
+
+filter_stats <- res.DUETknockoff$filter_stat[genera_idx]
+names(filter_stats) <- genera_set
+filter_stats
+
+#    g__Actinomyces      g__Neisseria    g__Haemophilus     g__Prevotella    g__Veillonella 
+#          20.12700          12.03155          41.49827         294.66505         189.41732 
+# g__Granulicatella    g__Megasphaera   g__Oribacterium      g__Atopobium      g__Bulleidia 
+#          11.91453          84.71763          31.63008         102.67988          21.10698 
+#  g__Mogibacterium    g__Selenomonas        g__Blautia 
+#          77.89577          40.55412          22.30308 
 ```
 
