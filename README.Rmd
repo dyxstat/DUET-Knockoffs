@@ -15,7 +15,13 @@ knitr::opts_chunk$set(
 
 # DUETknockoff
 
-The DUETknockoff package provides a knockoff-based framework for integrative feature selection from paired 16S and shotgun microbiome profiles. DUET-knockoff uses a ZINB–Gaussian copula model to construct platform-specific knockoffs and, for each taxon, tests a union null that it is not conditionally associated with the outcome in at least one platform. Discoveries reflect associations replicated across both technologies.
+## Overview
+
+DUET-knockoff is a knockoff-based framework for integrative feature selection from paired 16S and shotgun microbiome profiles. For each taxon, it tests a union null hypothesis that the taxon is not conditionally associated with the outcome in at least one platform. Within each platform, taxon counts are modeled using zero-inflated negative binomial (ZINB) distributions coupled with a Gaussian copula to generate knockoff statistics. Platform-specific knockoff contrasts are then combined via the simultaneous knockoff filter to obtain a single statistic per taxon, yielding finite-sample false discovery rate (FDR) control for cross-platform consistent signals.
+
+<p align="center">
+  <img src="figures/Overview.png" alt="DUET-knockoff workflow" width="100%"/>
+</p>
 
 ## Installation
 
