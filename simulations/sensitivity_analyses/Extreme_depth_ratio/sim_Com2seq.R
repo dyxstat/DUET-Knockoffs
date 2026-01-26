@@ -1,5 +1,5 @@
 # monte carlo 100 - CRN version with method-level seed separation
-# LOCOM methods version
+# Com2seq methods version
 
 library(parallel)
 library(MASS)
@@ -21,7 +21,7 @@ Sys.setenv(
 RNGkind("Mersenne-Twister")
 set.seed(42)
 
-B <- 100     # 100 times monte carlo
+B <- 100
 
 n_confounders <- 3
 
@@ -31,39 +31,31 @@ n_rej_stop <- 100
 have_bias <- 1; have_diff_bias <- 1;
 bias_sd1 <- 0.1; bias_sd2 <- 0.1
 
-depth_fold <- 10
+depth_fold <- 100
 depth.mu1 <- 100000; depth.mu2 <- 100000 * depth_fold
 
 depth.sd1 <- depth.mu1/5; depth.sd2 <- depth.mu2/5
 depth.lower <- 10000
 
-df <- readRDS("ZhuF_count.rds") # YeZ_count, Dha_count
+df <- readRDS("ZhuF_count.rds")
 df <- df[, colSums(df) > 0]
 
 pi_est <- DM.MoM(df)$pi
 n.otus <- length(pi_est)
 
-## -----------------------------
-## 100 times Monte Carlo over grid (LOCOM_16s, LOCOM_shotgun, LOCOM_Com_p, LOCOM_Com_count)
-## -----------------------------
-
-c_grid <- c(1e6)
-beta_grid <- c(3, 4, 5, 6, 7, 8, 9)
-prop.diff_grid <- c(0.05, 0.1, 0.15)
+c_grid <- c(1e3, 1e4, 1e5, 1e6)
+beta_grid <- c(4, 5, 6, 7, 8, 9, 10)
+prop.diff_grid <- c(0.1, 0.15)
 nsam_grid <- list(c(50, 50))
-fdr_grid <- c(0.1, 0.2)
+fdr_grid <- c(0.2)
 
-methods <- c("Locom_Com_P", "Locom_Com_Count", "Locom_16s", "Locom_shotgun")
-
-## -----------------------------
-## -----------------------------
-## -----------------------------
+methods <- c("Com2seq")
 
 ############# estimate phi #######################
 
-gmean <- function(x) exp(mean(log(x[x > 0])))  ## GM(d)
+gmean <- function(x) exp(mean(log(x[x > 0])))
 
-size_factors_from_depth <- function(depth) depth / gmean(depth)  ## si
+size_factors_from_depth <- function(depth) depth / gmean(depth)
 
 phi_from_vector <- function(y, depth, trim = 0.1, eps = 1e-8) {
   s  <- size_factors_from_depth(depth)
@@ -104,16 +96,11 @@ phi <- unlist(parallel::mclapply(
 
 ##########################################################
 
-## -----------------------------
-## single simulation
-## -----------------------------
 simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_target, seed, ib) {
 
   set.seed(seed)
 
   n_cores <- 1
-
-  # ==== Begin of Data Preparation ==== #
 
   n_DA <- ceiling(n.otus * prop.diff_val)
 
@@ -122,14 +109,12 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
 
   n_sam <- n.sam.grp1 + n.sam.grp2
 
-  ## 1) random choose DA otus
   causal.otus.idx <- sample(which(pi_est > 0), n_DA)
   noncausal.otus.idx <- setdiff(1:n.otus, causal.otus.idx)
 
   beta.otu <- rep(beta_val, length(causal.otus.idx))
   beta.otu.log <- log(beta.otu)
 
-  # 2)
   if (n_confounders > 0) {
 
     betaC <- log(1.1)
@@ -139,7 +124,6 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
     for (r in 1:n_confounders) confounding.otus[r,] <- sort(sample(w, 5))
   }
 
-  # 3) define bias factor
   bias.factor1 <- rep(1, n.otus)
   bias.factor2 <- rep(1, n.otus)
   if (have_bias) {
@@ -167,7 +151,6 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
     bias.factor2[top_taxa] <- 1
   }
 
-  ## 4) generate Covariate C, simulated library size
   if (n_confounders > 0) {
     C <- matrix(NA, nrow = n_sam, ncol = n_confounders)
     for (r in 1:n_confounders) {
@@ -175,7 +158,6 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
     }
   } else C <- NULL
 
-  # transform moments of normal distirbution to lognormal
   cv1 <- depth.sd1 / depth.mu1
   cv2 <- depth.sd2 / depth.mu2
 
@@ -186,18 +168,16 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   sdlog2 <- sqrt(log(1 + cv2^2))
 
   depth1.sim <- rlnorm(n_sam, meanlog1, sdlog1)
-  depth1.sim[depth1.sim < depth.lower] <- depth.lower  # trunct
-  depth1.sim <- round(depth1.sim)  # rounding
+  depth1.sim[depth1.sim < depth.lower] <- depth.lower
+  depth1.sim <- round(depth1.sim)
 
   depth2.sim <- rlnorm(n_sam, meanlog2, sdlog2)
-  depth2.sim[depth2.sim < depth.lower] <- depth.lower  # trunct
-  depth2.sim <- round(depth2.sim)  # rounding
+  depth2.sim[depth2.sim < depth.lower] <- depth.lower
+  depth2.sim <- round(depth2.sim)
 
-  ## 5) Define binary trait Y, baseline relative abundance matrix pi.table.sim
   Y <- c(rep(0, n.sam.grp1), rep(1, n.sam.grp2))
 
-  # Dirichlet sampling
-  c <- c_val    # 1e4, 1e5, 1e6
+  c <- c_val
   alpha <- c * pi_est
 
   pi.table.sim <- rdirichlet(n = n_sam, alpha)
@@ -205,22 +185,18 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   rownames(pi.table.sim) <- paste0("sub", 1:n_sam)
   colnames(pi.table.sim) <- paste0("taxon", 1:n.otus)
 
-  pi.table1.sim <- pi.table.sim  # 16s
-  pi.table2.sim <- pi.table.sim  # shotgun
+  pi.table1.sim <- pi.table.sim
+  pi.table2.sim <- pi.table.sim
 
-  causal.otus <- colnames(pi.table.sim)[causal.otus.idx]          ## causal names
-  noncausal.otus <- setdiff(colnames(pi.table.sim), causal.otus)  ## noncausal names
+  causal.otus <- colnames(pi.table.sim)[causal.otus.idx]
+  noncausal.otus <- setdiff(colnames(pi.table.sim), causal.otus)
 
-  ################################################################
-  # 6) Introduce causal effect
   pi.table1.sim[, causal.otus.idx] <- pi.table1.sim[, causal.otus.idx] * exp(Y %*% t(beta.otu.log))
   pi.table2.sim[, causal.otus.idx] <- pi.table2.sim[, causal.otus.idx] * exp(Y %*% t(beta.otu.log))
 
-  # Introduce confounding effect
   if (n_confounders > 0) {
     for (r in 1:n_confounders) {
-      # betaC^C[, r] = exp(C * log(betaC))
-      conf_factor <- exp(betaC * C[, r])    # or  (1.1)^C[, r]
+      conf_factor <- exp(betaC * C[, r])
       pi.table1.sim[, confounding.otus[r,]] <- sweep(
         pi.table1.sim[, confounding.otus[r,], drop = FALSE],
         1, conf_factor, "*"
@@ -232,7 +208,6 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
     }
   }
 
-  # Introduce bias effect
   if (have_bias == 1) {
     pi.table1.sim <- sweep(pi.table1.sim, 2, bias.factor1, "*")
     pi.table2.sim <- sweep(pi.table2.sim, 2, bias.factor2, "*")
@@ -241,10 +216,7 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   pi.table1.sim <- pi.table1.sim / rowSums(pi.table1.sim)
   pi.table2.sim <- pi.table2.sim / rowSums(pi.table2.sim)
 
-  ################################################################
-
-  # 7) Poisson-Gamma sampling
-  mu1 <- pi.table1.sim * depth1.sim    # mean absolute abundance matrix for 16s
+  mu1 <- pi.table1.sim * depth1.sim
   mu2 <- pi.table2.sim * depth2.sim
 
   phi_safe <- pmax(phi, 1e-8)
@@ -252,10 +224,9 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   otu.table1.sim <- matrix(0, n_sam, n.otus)
   otu.table2.sim <- matrix(0, n_sam, n.otus)
 
-  idx <- (phi >= 1e-8)     # Poisson-gamma for phi != 0
-  idx_p  <- !idx           # Poisson sampling for phi = 0
+  idx <- (phi >= 1e-8)
+  idx_p  <- !idx
 
-  # 16S count matrix
   if (any(idx)) {
     mu1_pg <- mu1[, idx, drop = FALSE]
     A1 <- rgamma(n = n_sam * sum(idx),
@@ -270,7 +241,6 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
     otu.table1.sim[, idx_p] <- matrix(x_p_1, nrow = n_sam)
   }
 
-  # SMS count matrix
   if (any(idx)) {
     mu2_pg <- mu2[, idx, drop = FALSE]
     A2 <- rgamma(n = n_sam * sum(idx),
@@ -290,7 +260,6 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   rownames(otu.table1.sim) <- rn
   rownames(otu.table2.sim) <- rn
 
-  ## 8) Filter & pool
   prop.presence1 <- colMeans(otu.table1.sim > 0)
   otus.keep1 <- which(prop.presence1 >= filter.thresh)
   otu.table1.sim.filter <- otu.table1.sim[, otus.keep1, drop=FALSE]
@@ -305,62 +274,31 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
   otus.keep.pool <- which(prop.presence.pool >= filter.thresh)
   otu.table.sim.pool.filter <- otu.table.sim.pool[, otus.keep.pool, drop=FALSE]
 
-  # ==== End of Data Preparation ==== #
-
-  # ==== LOCOM ==== #
-  set.seed(seed + 100000L + ib * 1000L)
-  res.locom1 <- locom(otu.table = otu.table1.sim.filter, Y = Y, C = C,
-                      n.perm.max = 50000, fdr.nominal = fdr_target,
-                      n.cores = n_cores, n.rej.stop = n_rej_stop)
-
-  set.seed(seed + 200000L + ib * 1000L)
-  res.locom2 <- locom(otu.table = otu.table2.sim.filter, Y = Y, C = C,
-                      n.perm.max = 50000, fdr.nominal = fdr_target,
-                      n.cores = n_cores, n.rej.stop = n_rej_stop)
-
-  set.seed(seed + 300000L + ib * 1000L)
-  res.locom.pool <- locom(otu.table = otu.table.sim.pool.filter, Y = Y, C = C,
-                          n.perm.max = 50000, fdr.nominal = fdr_target,
-                          n.cores = n_cores, n.rej.stop = n_rej_stop)
-
-  ###########
-  # p.combine
-  ###########
-
-  name1 <- colnames(res.locom1$p.otu)    # res.locom1 otu name
-  name2 <- colnames(res.locom2$p.otu)    # res.locom2 otu name
-  common.name <- intersect(name1, name2) # common otu name
-  j.mat1 <- match(common.name, name1)  # index for otu name in name1
-  j.mat2 <- match(common.name, name2)  # index for otu name in name2
-
-  p.both <- rbind(res.locom1$p.otu[j.mat1],
-                  res.locom2$p.otu[j.mat2])  # rbind common p-value
-  p.comp <- pcauchy(apply( tan( (0.5 - p.both)*pi ), 2, mean),
-                    lower.tail = F)  # use pcauchy to combine p-value
-
-  p.comp.name <- common.name  #
-
-  # combine single p-values from res.locom1 and res.locom2 into p.comp
-  if (length(res.locom1$p.otu[-j.mat1]) > 0) {
-    p.comp <- c(p.comp, res.locom1$p.otu[-j.mat1])
-    p.comp.name <- c(p.comp.name, name1[-j.mat1])
+  if (length(otus.keep.pool) == 0 || ncol(otu.table.sim.pool.filter) == 0) {
+    fdr_vec   <- c(Com2seq=NA)
+    power_vec <- fdr_vec
+    return(list(fdr = fdr_vec, power = power_vec))
   }
-  if (length(res.locom2$p.otu[-j.mat2]) > 0) {
-    p.comp <- c(p.comp, res.locom2$p.otu[-j.mat2])
-    p.comp.name <- c(p.comp.name, name2[-j.mat2])
-  }  #
 
-  # Benjamini-Hochberg adjust for p.comp
-  p.comp <- matrix(p.comp, nrow=1)
-  q.comp<- matrix(p.adjust(p.comp, method ="BH"), nrow=1)
-  colnames(p.comp) <- p.comp.name
-  colnames(q.comp) <- p.comp.name
+  W1 <- otu.table1.sim[, otus.keep.pool, drop = FALSE]
+  W2 <- otu.table2.sim[, otus.keep.pool, drop = FALSE]
 
-  # -----------------------------------
-  # Summarizing results
-  # -----------------------------------
+  Y1 <- matrix(as.integer(Y==1), ncol=1)
+  Y2 <- Y1
 
-  ## define function, out:n.out, se, sep, fdr
+  C1 <- as.matrix(C)
+  C2 <- as.matrix(C)
+
+  res.Com2seq <- Com2seq(
+    table1 = W1,
+    table2 = W2,
+    Y1 = Y1, Y2 = Y2,
+    C1 = C1, C2 = C2,
+    fdr.nominal = fdr_target, n.cores = n_cores,
+    n.perm.max = 50000, n.rej.stop = n_rej_stop,
+    seed = seed + 100000L + ib * 1000L
+  )
+
   summarize_otu_results <- function(qvalue, causal.otus, noncausal.otus, fdr.target=fdr_target) {
 
     otu.detected = colnames(qvalue)[which(qvalue < fdr.target)]
@@ -380,25 +318,13 @@ simulate_one_param <- function(c_val, beta_val, prop.diff_val, nsam_val, fdr_tar
     return(out)
   }
 
-  # Benchmark q-value summary
-  otu.comp.locom <- summarize_otu_results(q.comp, causal.otus, noncausal.otus)
-  otu.pool.locom <- summarize_otu_results(res.locom.pool$q.otu, causal.otus, noncausal.otus)
-  otu.locom.1 <- summarize_otu_results(res.locom1$q.otu, causal.otus, noncausal.otus)
-  otu.locom.2 <- summarize_otu_results(res.locom2$q.otu, causal.otus, noncausal.otus)
+  otu.new.omni <- summarize_otu_results(res.Com2seq$q.taxa.omni, causal.otus, noncausal.otus)
 
-  fdr_vec <- c(Locom_Com_P=otu.comp.locom$fdr, Locom_Com_Count=otu.pool.locom$fdr,
-               Locom_16s=otu.locom.1$fdr, Locom_shotgun=otu.locom.2$fdr)
-
-  power_vec <- c(Locom_Com_P=otu.comp.locom$sen, Locom_Com_Count=otu.pool.locom$sen,
-                 Locom_16s=otu.locom.1$sen, Locom_shotgun=otu.locom.2$sen)
+  fdr_vec <- c(Com2seq=otu.new.omni$fdr)
+  power_vec <- c(Com2seq=otu.new.omni$sen)
 
   list(fdr = fdr_vec, power = power_vec)
 }
-
-
-## -----------------------------
-## CRN Monte Carlo over grid (beta NOT in combos)
-## -----------------------------
 
 Kc <- length(c_grid)
 Kp <- length(prop.diff_grid)
@@ -406,7 +332,6 @@ Kn <- length(nsam_grid)
 Kf <- length(fdr_grid)
 Kb <- length(beta_grid)
 
-## combos without beta
 combos0 <- expand.grid(
   ic = seq_along(c_grid),
   ip = seq_along(prop.diff_grid),
@@ -423,7 +348,6 @@ combos0$label <- sprintf("c=%g|prop.diff=%.2f|nsam=%d_%d|fdr=%.2f",
                          sapply(nsam_grid[combos0$i_nsam], `[`, 2),
                          fdr_grid[combos0$ifdr])
 
-## store: each combo -> B × beta × methods
 fdr_store <- vector("list", K0)
 power_store <- vector("list", K0)
 for (k0 in seq_len(K0)) {
@@ -433,25 +357,20 @@ for (k0 in seq_len(K0)) {
                              dimnames = list(NULL, as.character(beta_grid), methods))
 }
 
-## tasks: combos0 × B
 tasks <- combos0[rep(seq_len(K0), each = B), ]
 tasks$r <- rep(seq_len(B), times = K0)
 
-## seed stream depends ONLY on (k0, r) — not beta
 base_seeds <- seq(1000000, by = 5000, length.out = K0)
 tasks$seed <- base_seeds[rep(seq_len(K0), each = B)] + tasks$r
 stopifnot(length(unique(tasks$seed)) == nrow(tasks))
 
-## cores
 n_cores_outer <- min(72, parallel::detectCores() - 1L)
 
-## Preload package
 suppressPackageStartupMessages({
   try(library(LOCOM), silent = TRUE)
   try(library(dirmult), silent = TRUE)
 })
 
-## worker
 work_fun_crn <- function(i){
 
   Sys.setenv(
@@ -475,7 +394,6 @@ work_fun_crn <- function(i){
   nsam_val <- nsam_grid[[i_nsam]]
   fdr_target <- fdr_grid[ifdr]
 
-  ## For THIS replicate seed_r, run ALL betas (CRN)
   out_beta <- lapply(seq_along(beta_grid), function(ib){
     beta_val <- beta_grid[ib]
     vals <- try(
@@ -506,7 +424,6 @@ work_fun_crn <- function(i){
   list(k0=k0, r=r, fdr_mat=fdr_mat, pow_mat=pow_mat)
 }
 
-## pbmcapply
 use_pb <- suppressWarnings(requireNamespace("pbmcapply", quietly = TRUE))
 res_task_list <- if (use_pb) {
   pbmcapply::pbmclapply(
@@ -529,14 +446,12 @@ res_task_list <- if (use_pb) {
   )
 }
 
-## fill back
 for (res in res_task_list) {
   if (is.null(res) || is.null(res$k0)) next
   fdr_store[[res$k0]][res$r, , ] <- res$fdr_mat
   power_store[[res$k0]][res$r, , ] <- res$pow_mat
 }
 
-## summarize to long df
 summary_rows <- vector("list", K0 * Kb * length(methods))
 row_i <- 0L
 

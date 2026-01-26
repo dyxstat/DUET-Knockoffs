@@ -31,7 +31,7 @@ n_rej_stop <- 100
 have_bias <- 1; have_diff_bias <- 1;
 bias_sd1 <- 0.1; bias_sd2 <- 0.1
 
-depth_fold <- 10
+depth_fold <- 100
 depth.mu1 <- 100000; depth.mu2 <- 100000 * depth_fold
 
 depth.sd1 <- depth.mu1/5; depth.sd2 <- depth.mu2/5
@@ -47,11 +47,11 @@ n.otus <- length(pi_est)
 ## 100 times Monte Carlo over grid (LOCOM_16s, LOCOM_shotgun, LOCOM_Com_p, LOCOM_Com_count)
 ## -----------------------------
 
-c_grid <- c(1e6)
-beta_grid <- c(3, 4, 5, 6, 7, 8, 9)
-prop.diff_grid <- c(0.05, 0.1, 0.15)
+c_grid <- c(1e3, 1e4, 1e5, 1e6)
+beta_grid <- c(4, 5, 6, 7, 8, 9, 10)
+prop.diff_grid <- c(0.1, 0.15)
 nsam_grid <- list(c(50, 50))
-fdr_grid <- c(0.1, 0.2)
+fdr_grid <- c(0.2)
 
 methods <- c("Locom_Com_P", "Locom_Com_Count", "Locom_16s", "Locom_shotgun")
 
