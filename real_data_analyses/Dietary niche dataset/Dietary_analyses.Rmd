@@ -1,0 +1,249 @@
+---
+title: "Dietary Niche Dataset Analyses"
+output:
+  pdf_document:
+    fig_width: 10
+    fig_height: 14
+date: "2026-03-21"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE,
+                      fig.align = "center")
+```
+
+```{r libraries}
+library(readxl)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(ggrepel)
+library(cowplot)
+library(compositions)
+library(ComplexHeatmap)
+library(circlize)
+```
+
+## Load Diet Data
+
+```{r load-diet-data}
+dat2 <- read.csv("Qiita_ID_11212/W.csv", row.names = 1)
+y2   <- read.csv("Qiita_ID_11212/y.csv", header = FALSE)
+k2   <- read.csv("Qiita_ID_11212/class_K.csv", header = FALSE)
+
+ra2 <- dat2 / rowSums(dat2)
+```
+
+## Extract Diet DUET-Knockoffs Selected Taxa
+
+```{r extract-diet-selected-taxa}
+# New detected-taxa format: one column per method, rows = taxa names (or empty)
+da_2 <- read_xlsx("Dietary_detected_taxa.xlsx")
+
+da_2_feature <- as.character(da_2$`DUET-Knockoffs`)
+da_2_feature <- da_2_feature[!is.na(da_2_feature) &
+                                nzchar(da_2_feature) &
+                                da_2_feature != "NA"]
+
+cat("Number of Diet selected taxa:", length(da_2_feature), "\n")
+```
+
+---
+
+## Diet Analysis 1: CLR Heatmap (Top 10 DA + Top 20 non-DA)
+
+```{r diet-clr-transform}
+ra2_clr <- as.data.frame(clr(ra2 + 1e-6))
+```
+
+```{r diet-heatmap-data-prep}
+# DA taxa: top 10 by variance
+ra2_da_all <- ra2_clr[, colnames(ra2_clr) %in% da_2_feature]
+vars_2_da <- apply(ra2_da_all, 2, var)
+top_10_da_2 <- names(sort(vars_2_da, decreasing = TRUE))[1:10]
+ra2_da <- ra2_da_all[, top_10_da_2]
+
+# non-DA taxa: top 20 by variance
+ra2_non_da <- ra2_clr[, !(colnames(ra2_clr) %in% da_2_feature)]
+vars_2 <- apply(ra2_non_da, 2, var)
+top_20_2 <- names(sort(vars_2, decreasing = TRUE))[1:20]
+ra2_non_da_20 <- ra2_non_da[, top_20_2]
+
+cat("DA taxa shown:", ncol(ra2_da), "\n")
+cat("non-DA taxa shown:", ncol(ra2_non_da_20), "\n")
+```
+
+```{r diet-heatmap, fig.width=12, fig.height=8}
+ra2_heatmap <- cbind(ra2_da, ra2_non_da_20)
+
+row_group_2 <- paste(
+  ifelse(y2$V1 == 1, "Control", "Case"),
+  ifelse(k2$V1 == 1, "16S", "Shotgun"),
+  sep = "-"
+)
+
+col_group_2 <- factor(
+  c(rep("DA", ncol(ra2_da)), rep("non-DA", ncol(ra2_non_da_20))),
+  levels = c("DA", "non-DA")
+)
+
+col_fun_2 <- colorRamp2(
+  c(min(ra2_heatmap), 0, max(ra2_heatmap)),
+  c("navy", "white", "firebrick3")
+)
+
+ht2 <- Heatmap(
+  as.matrix(ra2_heatmap),
+  name = "CLR",
+  column_split = col_group_2,
+  cluster_columns = TRUE,
+  clustering_distance_columns = "euclidean",
+  clustering_method_columns = "ward.D2",
+  column_title_gp = gpar(fontsize = 12, fontface = "bold"),
+  row_split = factor(row_group_2,
+                     levels = c("Control-16S", "Case-16S",
+                                "Control-Shotgun", "Case-Shotgun")),
+  cluster_rows = FALSE,
+  row_title_rot = 0,
+  row_title_gp = gpar(fontsize = 10),
+  col = col_fun_2,
+  show_row_names = FALSE,
+  show_column_names = TRUE,
+  column_names_rot = 45,
+  column_names_gp = gpar(fontsize = 8),
+  cluster_column_slices = FALSE,
+  row_gap = unit(2, "mm"),
+  column_gap = unit(3, "mm")
+)
+
+draw(ht2)
+```
+
+```{r save-diet-heatmap}
+pdf("plot/Dietary_CLR_heatmap.pdf", width = 12, height = 8)
+draw(ht2)
+dev.off()
+
+png("plot/Dietary_CLR_heatmap.png",
+    width = 12, height = 8, units = "in", res = 300)
+draw(ht2)
+dev.off()
+```
+
+---
+
+## Diet Analysis 2: Two-Platform LFC Scatter Plot
+
+```{r diet-lfc-compute}
+df_diet_long <- data.frame(
+  ra2[, da_2_feature],
+  Group = factor(y2$V1, levels = c(1, 2), labels = c("Control", "Case")),
+  Platform = factor(k2$V1, levels = c(1, 2), labels = c("16S", "Shotgun"))
+) %>%
+  pivot_longer(cols = all_of(da_2_feature),
+               names_to = "Taxon",
+               values_to = "RA")
+
+lfc_diet <- df_diet_long %>%
+  group_by(Taxon, Platform, Group) %>%
+  summarise(mean_RA = mean(RA, na.rm = TRUE), .groups = "drop") %>%
+  pivot_wider(names_from = Group, values_from = mean_RA) %>%
+  filter(Case > 0 & Control > 0) %>%
+  mutate(LFC = log2(Case / Control)) %>%
+  select(Taxon, Platform, LFC) %>%
+  pivot_wider(names_from = Platform, values_from = LFC,
+              names_prefix = "LFC_")
+
+lfc_diet <- lfc_diet %>% filter(is.finite(LFC_16S) & is.finite(LFC_Shotgun))
+
+lfc_diet$Concordant <- with(lfc_diet,
+  (LFC_16S > 0 & LFC_Shotgun > 0) | (LFC_16S < 0 & LFC_Shotgun < 0))
+
+lfc_diet$Taxon_label <- gsub("^g__", "", lfc_diet$Taxon)
+
+lfc_diet$avg_abs_LFC <- (abs(lfc_diet$LFC_16S) + abs(lfc_diet$LFC_Shotgun)) / 2
+lfc_diet$show_label <- rank(-lfc_diet$avg_abs_LFC) <= 15
+
+n_conc <- sum(lfc_diet$Concordant, na.rm = TRUE)
+n_total <- nrow(lfc_diet)
+
+cat("Taxa with non-zero mean RA on both platforms:", n_total, "out of", length(da_2_feature), "\n")
+cat("Concordant:", n_conc, "/", n_total, "\n")
+cat("Discordant:", n_total - n_conc, "/", n_total, "\n")
+```
+
+```{r diet-lfc-scatter, fig.width=8, fig.height=7}
+lim2 <- max(abs(c(lfc_diet$LFC_16S, lfc_diet$LFC_Shotgun)), na.rm = TRUE) * 1.2
+
+ggplot(lfc_diet, aes(x = LFC_16S, y = LFC_Shotgun)) +
+  annotate("rect", xmin = 0, xmax = lim2, ymin = 0, ymax = lim2,
+           fill = "#378ADD", alpha = 0.06) +
+  annotate("rect", xmin = -lim2, xmax = 0, ymin = -lim2, ymax = 0,
+           fill = "#378ADD", alpha = 0.06) +
+  annotate("rect", xmin = -lim2, xmax = 0, ymin = 0, ymax = lim2,
+           fill = "#D85A30", alpha = 0.04) +
+  annotate("rect", xmin = 0, xmax = lim2, ymin = -lim2, ymax = 0,
+           fill = "#D85A30", alpha = 0.04) +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.4) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "gray50", linewidth = 0.4) +
+  geom_abline(slope = 1, intercept = 0, linetype = "dashed",
+              color = "gray70", linewidth = 0.4) +
+  geom_point(aes(color = Concordant), shape = 16, size = 2.5, alpha = 0.75) +
+  scale_color_manual(values = c("TRUE" = "#378ADD", "FALSE" = "#D85A30"),
+                     labels = c("TRUE" = "Concordant",
+                                "FALSE" = "Discordant")) +
+  geom_text_repel(
+    data = subset(lfc_diet, show_label),
+    aes(label = Taxon_label),
+    size = 2.8, fontface = "italic",
+    max.overlaps = 20, seed = 42
+  ) +
+  annotate("text", x = lim2 * 0.7, y = lim2 * 0.9,
+           label = "Concordant ↑", color = "gray50", size = 3) +
+  annotate("text", x = -lim2 * 0.7, y = -lim2 * 0.9,
+           label = "Concordant ↓", color = "gray50", size = 3) +
+  annotate("text", x = -lim2 * 0.7, y = lim2 * 0.9,
+           label = "Discordant", color = "gray50", size = 3) +
+  annotate("text", x = lim2 * 0.7, y = -lim2 * 0.9,
+           label = "Discordant", color = "gray50", size = 3) +
+  coord_fixed(xlim = c(-lim2, lim2), ylim = c(-lim2, lim2)) +
+  labs(
+    x = expression(log[2]~"fold change (16S)"),
+    y = expression(log[2]~"fold change (Shotgun)"),
+    title = "Cross-Platform LFC Consistency of Selected Taxa in Dietary-niche Dataset",
+    color = NULL
+  ) +
+  theme_bw(base_size = 11) +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    plot.subtitle = element_text(hjust = 0.5),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
+```
+
+```{r save-diet-lfc}
+ggsave("plot/Dietary_LFC_scatter.pdf",
+       width = 8, height = 7, dpi = 600)
+ggsave("plot/Dietary_LFC_scatter.png",
+       width = 8, height = 7, dpi = 600)
+```
+
+---
+
+## Diet Summary Statistics
+
+```{r diet-summary}
+cat("\n=== Diet Analysis 1 Summary ===\n")
+cat("Total DUET-Knockoffs selected taxa:", length(da_2_feature), "\n")
+cat("Top 10 DA taxa (by variance):\n")
+print(top_10_da_2)
+
+cat("\n=== Diet Analysis 2 Summary ===\n")
+cat("Concordant taxa:", n_conc, "out of", n_total, "\n")
+cat("Discordant taxa:", n_total - n_conc, "out of", n_total, "\n")
+cat("Concordance rate:", round(n_conc / n_total * 100, 1), "%\n")
+```
+
+
+
